@@ -4,7 +4,7 @@
 
 Caitlyn is the evolved successor to Bruce firmware for the LILYGO T-Embed CC1101 (and compatible boards). It adds offline voice control, push-to-talk operation, tamper protection, advanced attack chaining, multi-radio capabilities, and strong engineering foundations while remaining compatible with the Bruce ecosystem.
 
-**Current Status:** Foundation modules complete and ready for integration  
+**Current Status:** Full foundation + OTA + nRF24 skeleton ready for integration  
 **Target:** Ultimate field-ready red-team tool  
 **License:** AGPL-3.0 (inherits from Bruce)
 
@@ -23,13 +23,16 @@ Caitlyn is the evolved successor to Bruce firmware for the LILYGO T-Embed CC1101
 
 ```
 components/
-├── caitlyn_config/     NVS configuration (voice mode, thresholds, timeouts)
-├── caitlyn_power/      Power management, PTT tracking, deep sleep, screen timeout
-├── tamper/             Acoustic + triple-press tamper detection
-├── caitlyn/            Core PTT state machine + command chaining parser
-├── caitlyn_ui/         Listening overlay + scrolling tooltip helpers
-├── caitlyn_fs/         Directory layout + secure wipe helpers
-├── caitlyn_commands/   Built-in command handlers (15+ commands + chains)
+├── caitlyn_config/     NVS configuration
+├── caitlyn_power/      Power management, PTT, deep sleep
+├── tamper/             Acoustic + triple-press tamper
+├── caitlyn/            Core PTT state machine + chaining
+├── caitlyn_ui/         Listening overlay + tooltips
+├── caitlyn_fs/         Directory layout + secure wipe
+├── caitlyn_commands/   15+ built-in command handlers
+├── caitlyn_ota/        Model download + firmware OTA
+├── caitlyn_nrf24/      NyanBOX-style multi-nRF24 skeleton
+├── caitlyn_bootstrap.c Single entry-point example
 ├── README.md
 └── INTEGRATION_EXAMPLE.md
 ```
@@ -39,18 +42,12 @@ components/
 ## Quick Integration
 
 ```c
-caitlyn_fs_init();
-caitlyn_init();                 // config → power → tamper
-caitlyn_ui_init();
-caitlyn_commands_register_all();
-caitlyn_start();
-
-// In main loop:
-caitlyn_tick();
-caitlyn_ui_tooltip_tick();
+caitlyn_bootstrap();
+caitlyn_start_background_task();
 ```
 
-See `components/INTEGRATION_EXAMPLE.md` for the full pattern.
+Or call the ticks from your existing main loop.  
+See `components/INTEGRATION_EXAMPLE.md` and `components/caitlyn_bootstrap.c`.
 
 ---
 
@@ -60,6 +57,7 @@ See `components/INTEGRATION_EXAMPLE.md` for the full pattern.
 - ESP32-S3, 16 MB Flash, 8 MB PSRAM
 - Built-in mic + speaker, CC1101 Sub-GHz, PN532 NFC
 - Rotary encoder with center button (GPIO 0)
+- Optional: 1–3 external nRF24L01+ modules for 2.4 GHz expansion
 
 ---
 
