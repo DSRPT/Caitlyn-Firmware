@@ -4,40 +4,53 @@
 
 Caitlyn is the evolved successor to Bruce firmware for the LILYGO T-Embed CC1101 (and compatible boards). It adds offline voice control, push-to-talk operation, tamper protection, advanced attack chaining, multi-radio capabilities, and strong engineering foundations while remaining compatible with the Bruce ecosystem.
 
-**Current Status:** Foundation phase  
+**Current Status:** Foundation modules complete and ready for integration  
 **Target:** Ultimate field-ready red-team tool  
 **License:** AGPL-3.0 (inherits from Bruce)
 
 ---
 
-## Key Documents
+## Repository Contents
 
-| Document | Description |
-|----------|-------------|
+| Path | Description |
+|------|-------------|
 | [CAITLYN_ULTIMATE_SPEC.md](CAITLYN_ULTIMATE_SPEC.md) | Complete feature specification + priority order |
-| [CLAUDE_METAPROMPT_ULTIMATE.md](CLAUDE_METAPROMPT_ULTIMATE.md) | Full-spectrum metaprompt to give Claude for building the entire project |
-| [PHASE1_POWER_NVS_GUIDE.md](PHASE1_POWER_NVS_GUIDE.md) | Immediate next step: Power Management + NVS Config |
+| [CLAUDE_METAPROMPT_ULTIMATE.md](CLAUDE_METAPROMPT_ULTIMATE.md) | Full-spectrum metaprompt for Claude |
+| [PHASE1_POWER_NVS_GUIDE.md](PHASE1_POWER_NVS_GUIDE.md) | Original Phase 1 guide |
+| [components/](components/) | **Complete modular source code** |
+
+### Components (ready to use)
+
+```
+components/
+├── caitlyn_config/     NVS configuration (voice mode, thresholds, timeouts)
+├── caitlyn_power/      Power management, PTT tracking, deep sleep, screen timeout
+├── tamper/             Acoustic + triple-press tamper detection
+├── caitlyn/            Core PTT state machine + command chaining parser
+├── caitlyn_ui/         Listening overlay + scrolling tooltip helpers
+├── caitlyn_fs/         Directory layout + secure wipe helpers
+├── caitlyn_commands/   Built-in command handlers (15+ commands + chains)
+├── README.md
+└── INTEGRATION_EXAMPLE.md
+```
 
 ---
 
-## Vision
+## Quick Integration
 
-Caitlyn transforms the T-Embed CC1101 into a voice-controlled, tamper-aware, multi-radio red-team implant with:
+```c
+caitlyn_fs_init();
+caitlyn_init();                 // config → power → tamper
+caitlyn_ui_init();
+caitlyn_commands_register_all();
+caitlyn_start();
 
-- Offline TinyML voice commands + natural language chaining
-- Push-to-Talk (default) and Wake-Word modes
-- Tamper detection with secure wipe
-- Scrolling tooltips and strong UX
-- NyanBOX-style 2.4 GHz firepower (nRF24)
-- Full Bruce compatibility
-- Solid power management and configuration persistence
+// In main loop:
+caitlyn_tick();
+caitlyn_ui_tooltip_tick();
+```
 
----
-
-## Immediate Priority
-
-**Phase 1 – Power Management + NVS Configuration** is the highest-impact remaining gap.  
-Start there before adding voice overlays or multi-radio features. See `PHASE1_POWER_NVS_GUIDE.md`.
+See `components/INTEGRATION_EXAMPLE.md` for the full pattern.
 
 ---
 
@@ -55,14 +68,6 @@ Start there before adding voice overlays or multi-radio features. See `PHASE1_PO
 This firmware is intended **exclusively for authorized penetration testing, red-team exercises, and research on systems you own or have explicit written permission to test**.
 
 Unauthorized use may violate local laws. Always follow the law and ethical guidelines.
-
----
-
-## Development
-
-Base: Bruce 1.16+  
-Approach: Modular components under `components/`  
-Style: Clean C APIs, FreeRTOS, LVGL, low-power first
 
 ---
 
