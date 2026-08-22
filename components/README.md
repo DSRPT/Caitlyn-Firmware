@@ -6,13 +6,16 @@ Modular building blocks for the Caitlyn firmware (AI-enhanced successor to Bruce
 
 ```
 components/
-├── caitlyn_config/       # NVS-backed configuration (voice mode, thresholds, timeouts)
-├── caitlyn_power/        # Power management, screen timeout, PTT button tracking, deep sleep
-├── tamper/               # Acoustic + triple-press tamper detection + self-destruct
-├── caitlyn/              # Core voice engine, PTT state machine, command chaining
-├── caitlyn_ui/           # Listening overlay + scrolling tooltip helpers
-├── caitlyn_fs/           # Standard directory layout + secure wipe helpers
-├── caitlyn_commands/     # Built-in command handlers (deauth, BLE spam, chains, etc.)
+├── caitlyn_config/       # NVS-backed configuration
+├── caitlyn_power/        # Power management, PTT tracking, deep sleep
+├── tamper/               # Acoustic + triple-press tamper detection
+├── caitlyn/              # Core PTT state machine + command chaining
+├── caitlyn_ui/           # Listening overlay + scrolling tooltips
+├── caitlyn_fs/           # Directory layout + secure wipe
+├── caitlyn_commands/     # Built-in attack command handlers
+├── caitlyn_ota/          # Model download + firmware OTA helpers
+├── caitlyn_nrf24/        # NyanBOX-style multi-nRF24 skeleton
+├── caitlyn_bootstrap.c   # Single entry-point example
 ├── README.md
 └── INTEGRATION_EXAMPLE.md
 ```
@@ -20,56 +23,29 @@ components/
 ## Quick Start
 
 ```c
-#include "caitlyn.h"
-#include "caitlyn_ui.h"
-#include "caitlyn_fs.h"
-#include "caitlyn_commands.h"
-
-void app_main(void)
-{
-    // ... Bruce hardware + LVGL init ...
-
-    caitlyn_fs_init();
-    caitlyn_init();                 // config → power → tamper
-    caitlyn_ui_init();
-    caitlyn_commands_register_all();
-    caitlyn_start();
-
-    while (1) {
-        caitlyn_tick();
-        caitlyn_ui_tooltip_tick();
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
-}
+// After Bruce hardware + LVGL init:
+caitlyn_bootstrap();
+caitlyn_start_background_task();   // or call ticks from existing loop
 ```
 
-See `INTEGRATION_EXAMPLE.md` for the full recommended integration pattern.
+## Component Status
 
-## Key Public APIs
+| Component | Status | Notes |
+|-----------|--------|-------|
+| caitlyn_config | Complete | Full NVS load/save |
+| caitlyn_power | Complete | PTT, timeout, deep sleep |
+| tamper | Complete | Mic + triple-press |
+| caitlyn | Complete | State machine + chaining |
+| caitlyn_ui | Complete | Overlay + tooltip timers |
+| caitlyn_fs | Complete | Layout + secure wipe |
+| caitlyn_commands | Complete | 15 handlers + chains |
+| caitlyn_ota | Complete | Model download + firmware OTA |
+| caitlyn_nrf24 | Skeleton | Ready for hardware attach |
 
-| Function | Purpose |
-|----------|---------|
-| `caitlyn_power_is_ptt_active()` | True while center button is held |
-| `caitlyn_is_listening()` | True while listening overlay should be shown |
-| `caitlyn_execute_command_string("deauth all and spam BLE")` | Natural language chaining |
-| `tamper_force_trigger()` | Force self-destruct (voice command) |
-| `caitlyn_config_save()` | Persist settings to NVS |
-| `caitlyn_fs_secure_wipe(false)` | Wipe logs + macros |
-| `caitlyn_commands_register_all()` | Register all built-in attack commands |
+## Integration Points Still Open
 
-## Status
-
-- **caitlyn_config** – fully functional
-- **caitlyn_power** – fully functional (PTT + timeout + deep sleep)
-- **tamper** – fully functional
-- **caitlyn** – functional state machine + chaining parser (TinyML inference is a clear integration point)
-- **caitlyn_ui** – functional timer/overlay logic (LVGL object creation is a clear integration point)
-- **caitlyn_fs** – fully functional
-- **caitlyn_commands** – complete set of handlers with logging (real Bruce attack calls are TODOs)
-
-## Next Steps for Full Integration
-
-1. Replace the `ESP_LOGI` placeholders in `caitlyn_commands.c` with real Bruce attack function calls.
-2. Wire the listening overlay to actual LVGL objects.
-3. Feed real mic volume samples into `tamper_check_mic()`.
-4. Connect the Edge Impulse / TFLite model inside `caitlyn_process_audio_buffer()`.
+1. Replace `ESP_LOGI` placeholders in `caitlyn_commands.c` with real Bruce attack calls.
+2. Create actual LVGL objects inside `caitlyn_ui_set_listening_overlay()`.
+3. Feed real mic volume into `tamper_check_mic()`.
+4. Load the Edge Impulse / TFLite model inside `caitlyn_process_audio_buffer()`.
+5. Probe real nRF24 modules and implement scan/jam/MouseJack.
