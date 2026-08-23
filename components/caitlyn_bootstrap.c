@@ -12,6 +12,7 @@
 #include "caitlyn_commands.h"
 #include "caitlyn_ota.h"
 #include "caitlyn_nrf24.h"
+#include "caitlyn_skills.h"
 #include "caitlyn_power.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -42,10 +43,13 @@ esp_err_t caitlyn_bootstrap(void)
     // 5. nRF24 expansion (safe even if no modules attached)
     ESP_ERROR_CHECK(caitlyn_nrf24_init());
 
-    // 6. Register all built-in commands
+    // 6. Register all built-in atomic commands
     ESP_ERROR_CHECK(caitlyn_commands_register_all());
 
-    // 7. Start the core state machine
+    // 7. Load and register pre-loaded multi-step skills
+    ESP_ERROR_CHECK(caitlyn_skills_init());
+
+    // 8. Start the core state machine
     ESP_ERROR_CHECK(caitlyn_start());
 
     // Optional: first-boot legal confirmation
@@ -62,6 +66,7 @@ esp_err_t caitlyn_bootstrap(void)
     ESP_LOGI(TAG, "Voice mode: %s",
              caitlyn_config_get_voice_mode() == CAITLYN_VOICE_MODE_PTT ? "PTT" : "Wake-Word");
     ESP_LOGI(TAG, "nRF24 modules detected: %d", caitlyn_nrf24_get_module_count());
+    ESP_LOGI(TAG, "Pre-loaded skills: %d", caitlyn_skills_count());
 
     return ESP_OK;
 }
